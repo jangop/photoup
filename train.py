@@ -20,8 +20,8 @@ def train(
             torchvision.transforms.ToTensor(),
         ]
     )
-    base_dataset = torchvision.datasets.LFWPeople(
-        root="./data", download=True, transform=transform
+    base_dataset = torchvision.datasets.Places365(
+        root="./data", small=True, download=True, transform=transform
     )
 
     # Split dataset into train and test.
