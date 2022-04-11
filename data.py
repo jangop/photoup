@@ -1,6 +1,7 @@
 import torch.utils.data
 import torch.nn.functional
 
+
 class RotationDataset(torch.utils.data.Dataset):
     def __init__(self, dataset: torch.utils.data.Dataset):
         self.dataset = dataset
@@ -15,4 +16,3 @@ class RotationDataset(torch.utils.data.Dataset):
             sample = torch.rot90(sample, rotation, [1, 2])
         label = torch.nn.functional.one_hot(torch.tensor(rotation), 4)
         return sample, label
-
