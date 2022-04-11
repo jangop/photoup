@@ -51,7 +51,7 @@ def train(
     )
 
     # Save a random batch of images.
-    batch_images, batch_labels = next(iter(base_dataset_training))
+    batch_images, batch_labels = next(iter(data_loader_training))
     grid = torchvision.utils.make_grid(batch_images)
     torchvision.utils.save_image(grid, "batch.png")
 
@@ -73,7 +73,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_workers", type=int, default=8, help="Number of workers.")
+    parser.add_argument("--n_workers", type=int, default=0, help="Number of workers.")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size.")
     parser.add_argument(
         "--device",
@@ -84,7 +84,7 @@ def main():
     parser.add_argument(
         "--n_devices", type=int, default=None, help="Number of devices."
     )
-    parser.add_argument("--max_epochs", type=int, default=1000, help="Max epochs.")
+    parser.add_argument("--max_epochs", type=int, default=None, help="Max epochs.")
 
     args = parser.parse_args()
 
