@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional
+import torchmetrics
 
 
 class RotationModel(pl.LightningModule):
@@ -35,14 +36,17 @@ class RotationModel(pl.LightningModule):
         x, y = batch
         y = y.float()
         predictions = self.forward(x)
-        loss = torch.nn.functional.cross_entropy(predictions, y)
+        loss = torch.nn.functional.cross_entropy(predictions, y.float())
+        self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y = y.float()
         predictions = self.forward(x)
-        loss = torch.nn.functional.cross_entropy(predictions, y)
+
+        self.log("val_acc", torchmetrics.functional.accuracy(predictions, y))
+        loss = torch.nn.functional.cross_entropy(predictions, y.float())
+        self.log("val_loss", loss)
         return loss
 
     def configure_optimizers(self):
