@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 import torch.utils.data
 import torchvision.datasets
@@ -11,7 +13,12 @@ from network import RotationModel
 
 
 def train(
-    batch_size: int, n_workers: int, device: str, n_devices: int, max_epochs: int
+    batch_size: int,
+    n_workers: int,
+    device: str,
+    n_devices: int,
+    max_epochs: int,
+    dataset: str,
 ):
     # Load base dataset.
     transform = torchvision.transforms.Compose(
@@ -21,9 +28,17 @@ def train(
             torchvision.transforms.ToTensor(),
         ]
     )
-    base_dataset = torchvision.datasets.Places365(
-        root="./data", small=True, download=True, transform=transform
-    )
+    if dataset == "places":
+        path = Path("./data/train_256_places365standard.tar")
+        base_dataset = torchvision.datasets.Places365(
+            root="./data", small=True, download=~path.exists(), transform=transform
+        )
+    elif dataset == "people":
+        base_dataset = torchvision.datasets.LFWPeople(
+            root="./data", download=True, transform=transform
+        )
+    else:
+        raise ValueError(f"Unknown dataset: {dataset}")
 
     # Split dataset into train and test.
     n_samples = len(base_dataset)
@@ -92,6 +107,9 @@ def main():
         "--n_devices", type=int, default=None, help="Number of devices."
     )
     parser.add_argument("--max_epochs", type=int, default=None, help="Max epochs.")
+    parser.add_argument(
+        "--dataset", type=str, default="places", choices=["places", "people"]
+    )
 
     args = parser.parse_args()
 
@@ -101,6 +119,7 @@ def main():
         device=args.device,
         n_devices=args.n_devices,
         max_epochs=args.max_epochs,
+        dataset=args.dataset,
     )
 
 
