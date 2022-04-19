@@ -1,14 +1,15 @@
 from pathlib import Path
 
+import pytorch_lightning as pl
 import torch
+import torch.nn.functional
 import torch.utils.data
 import torchvision.datasets
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
-from data import RotationDataset
-import torch.nn.functional
 import torchvision.models
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import TensorBoardLogger
 
+from data import RotationDataset
 from network import RotationModel
 
 
@@ -81,9 +82,12 @@ def train(
         accelerator=device,
         devices=n_devices,
         max_epochs=max_epochs,
+        val_check_interval=0.2,
+        callbacks=[EarlyStopping(monitor="val_acc_average", mode="max")],
     )
 
     # Train model.
+    trainer.validate(model, data_loader_validation)
     trainer.fit(
         model,
         train_dataloaders=data_loader_training,

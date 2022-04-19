@@ -43,8 +43,8 @@ class RotationModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        y = y.float()
         predictions = self.forward(x)
+
         loss = torch.nn.functional.cross_entropy(predictions, y.float())
         self.log("train_loss", loss)
         return loss
@@ -53,7 +53,13 @@ class RotationModel(pl.LightningModule):
         x, y = batch
         predictions = self.forward(x)
 
-        self.log("val_acc", torchmetrics.functional.accuracy(predictions, y))
+        self.log(
+            "val_acc_per_class",
+            torchmetrics.functional.accuracy(
+                predictions, y, num_classes=4, average=None
+            ),
+        )
+        self.log("val_acc_average", torchmetrics.functional.accuracy(predictions, y))
         loss = torch.nn.functional.cross_entropy(predictions, y.float())
         self.log("val_loss", loss)
         return loss

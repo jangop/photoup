@@ -1,5 +1,5 @@
-import torch.utils.data
 import torch.nn.functional
+import torch.utils.data
 
 
 class RotationDataset(torch.utils.data.Dataset):
