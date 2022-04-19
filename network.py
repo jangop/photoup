@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional
 import torchmetrics
-import torchvision
 
 
 class RotationModel(pl.LightningModule):
@@ -72,6 +71,26 @@ class RotationModel(pl.LightningModule):
         # Compute and log loss.
         loss = torch.nn.functional.cross_entropy(predictions, y.float())
         self.log("val_loss", loss)
+
+        # Log example images with “top markers”.
+        if batch_idx == 0:
+            for i, label in enumerate(predicted_labels):
+                size = 10
+                start = (128 - size) // 2
+                end = start + size
+                if label == 0:
+                    x[i, :, :size, start:end] = 0
+                    x[i, :, 2 : size - 2, start + 2 : end - 2] = 1
+                elif label == 1:
+                    x[i, :, start:end, :size] = 0
+                    x[i, :, start + 2 : end - 2, 2 : size - 2] = 1
+                elif label == 2:
+                    x[i, :, -size:, start:end] = 0
+                    x[i, :, -size + 2 : -2, start + 2 : end - 2] = 1
+                elif label == 3:
+                    x[i, :, start:end:, -size:] = 0
+                    x[i, :, start + 2 : end - 2 :, -size + 2 : -2] = 1
+            self.logger.experiment.add_images("batch", x)
 
         # Return loss.
         return loss
