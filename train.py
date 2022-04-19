@@ -104,10 +104,7 @@ def main():
     parser.add_argument("--n_workers", type=int, default=0, help="Number of workers.")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size.")
     parser.add_argument(
-        "--device",
-        type=str,
-        default="auto",
-        help="Device.",
+        "--device", type=str, default="auto", help="Device.",
     )
     parser.add_argument(
         "--n_devices", type=int, default=None, help="Number of devices."

@@ -2,12 +2,11 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional
 import torchmetrics
+import torchvision
 
 
 class RotationModel(pl.LightningModule):
-    def __init__(
-        self,
-    ):
+    def __init__(self,):
         super().__init__()
 
         self.first_normalization = torch.nn.BatchNorm2d(3)
@@ -50,18 +49,31 @@ class RotationModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        # Process data.
         x, y = batch
         predictions = self.forward(x)
 
-        self.log(
-            "val_acc_per_class",
-            torchmetrics.functional.accuracy(
-                predictions, y, num_classes=4, average=None
-            ),
+        # Compute and log accuracy.
+        predicted_labels = torch.argmax(predictions, dim=1)
+        y_labels = torch.argmax(y, dim=1)
+
+        validation_accuracy_per_class = torchmetrics.functional.accuracy(
+            predicted_labels, y_labels, num_classes=4, average=None,
         )
-        self.log("val_acc_average", torchmetrics.functional.accuracy(predictions, y))
+        for i, accuracy in enumerate(validation_accuracy_per_class):
+            self.log(f"val_acc_{i}", accuracy)
+        validation_accuracy_averaged = torchmetrics.functional.accuracy(
+            predicted_labels, y_labels
+        )
+        self.log(
+            "val_acc_average", validation_accuracy_averaged,
+        )
+
+        # Compute and log loss.
         loss = torch.nn.functional.cross_entropy(predictions, y.float())
         self.log("val_loss", loss)
+
+        # Return loss.
         return loss
 
     def configure_optimizers(self):
