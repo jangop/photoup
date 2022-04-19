@@ -31,7 +31,7 @@ def train(
     )
     if dataset == "places":
         path = Path("./data/data_256_standard")
-        download = ~path.exists()
+        download = not path.exists()
         print(f"{download = }")
         base_dataset = torchvision.datasets.Places365(
             root="./data", small=True, download=download, transform=transform
