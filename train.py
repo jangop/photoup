@@ -2,6 +2,7 @@ import torch
 import torch.utils.data
 import torchvision.datasets
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import TensorBoardLogger
 from data import RotationDataset
 import torch.nn.functional
 import torchvision.models
@@ -59,7 +60,13 @@ def train(
     model = RotationModel()
 
     # Prepare trainer.
-    trainer = pl.Trainer(accelerator=device, devices=n_devices, max_epochs=max_epochs)
+    tensor_board = TensorBoardLogger("tb_logs")
+    trainer = pl.Trainer(
+        logger=tensor_board,
+        accelerator=device,
+        devices=n_devices,
+        max_epochs=max_epochs,
+    )
 
     # Train model.
     trainer.fit(
