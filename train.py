@@ -30,9 +30,11 @@ def train(
         ]
     )
     if dataset == "places":
-        path = Path("./data/train_256_places365standard.tar")
+        path = Path("./data/data_256_standard")
+        download = ~path.exists()
+        print(f"{download = }")
         base_dataset = torchvision.datasets.Places365(
-            root="./data", small=True, download=~path.exists(), transform=transform
+            root="./data", small=True, download=download, transform=transform
         )
     elif dataset == "people":
         base_dataset = torchvision.datasets.LFWPeople(
