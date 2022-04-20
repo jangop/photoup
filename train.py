@@ -13,35 +13,67 @@ from data import RotationDataset
 from network import RotationModel
 
 
-def train(
-    batch_size: int,
-    n_workers: int,
-    device: str,
-    n_devices: int,
-    max_epochs: int,
-    dataset: str,
-):
+def train(args):
     # Load base dataset.
-    transform = torchvision.transforms.Compose(
-        [
-            torchvision.transforms.RandomResizedCrop(128),
-            torchvision.transforms.AutoAugment(),
-            torchvision.transforms.ToTensor(),
-        ]
-    )
-    if dataset == "places":
+    if args.transforms == "auto":
+        transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.RandomResizedCrop(128),
+                torchvision.transforms.AutoAugment(),
+                torchvision.transforms.ToTensor(),
+            ]
+        )
+    elif args.transforms == "none":
+        transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.RandomResizedCrop(128),
+                torchvision.transforms.ToTensor(),
+            ]
+        )
+    elif args.transforms == "soft":
+        transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.RandomResizedCrop(128),
+                torchvision.transforms.RandomHorizontalFlip(),
+                torchvision.transforms.ColorJitter(
+                    brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5
+                ),
+                torchvision.transforms.ToTensor(),
+            ]
+        )
+    elif args.transforms == "hard":
+        transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.RandomPerspective(fill=128),
+                torchvision.transforms.RandomResizedCrop(128),
+                torchvision.transforms.RandomHorizontalFlip(),
+                torchvision.transforms.ColorJitter(
+                    brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5
+                ),
+                torchvision.transforms.RandomAdjustSharpness(
+                    sharpness_factor=0.5, p=0.25
+                ),
+                torchvision.transforms.RandomAutocontrast(p=0.25),
+                torchvision.transforms.RandomEqualize(p=0.25),
+                torchvision.transforms.ToTensor(),
+            ]
+        )
+    else:
+        raise ValueError(f"Unknown transforms: {args.transforms}")
+
+    if args.dataset == "places":
         path = Path("./data/data_256_standard")
         download = not path.exists()
         print(f"{download = }")
         base_dataset = torchvision.datasets.Places365(
             root="./data", small=True, download=download, transform=transform
         )
-    elif dataset == "people":
+    elif args.dataset == "people":
         base_dataset = torchvision.datasets.LFWPeople(
             root="./data", download=True, transform=transform
         )
     else:
-        raise ValueError(f"Unknown dataset: {dataset}")
+        raise ValueError(f"Unknown dataset: {args.dataset}")
 
     # Split dataset into train and test.
     n_samples = len(base_dataset)
@@ -58,15 +90,15 @@ def train(
     # Prepare dataloader.
     data_loader_training = torch.utils.data.DataLoader(
         rotation_dataset_training,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=True,
-        num_workers=n_workers,
+        num_workers=args.n_workers,
     )
     data_loader_validation = torch.utils.data.DataLoader(
         rotation_dataset_validation,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=False,
-        num_workers=n_workers,
+        num_workers=args.n_workers,
     )
 
     # Save a random batch of images.
@@ -75,16 +107,13 @@ def train(
     torchvision.utils.save_image(grid, "batch.png")
 
     # Prepare model.
-    model = RotationModel()
+    model = RotationModel(args)
 
     # Prepare trainer.
     tensor_board = TensorBoardLogger("tb_logs")
-    trainer = pl.Trainer(
+    trainer = pl.Trainer.from_argparse_args(
+        args,
         logger=tensor_board,
-        accelerator=device,
-        devices=n_devices,
-        max_epochs=max_epochs,
-        val_check_interval=0.2,
         callbacks=[EarlyStopping(monitor="val_acc_average", mode="max")],
     )
 
@@ -109,21 +138,16 @@ def main():
     parser.add_argument(
         "--n_devices", type=int, default=None, help="Number of devices."
     )
-    parser.add_argument("--max_epochs", type=int, default=None, help="Max epochs.")
     parser.add_argument(
         "--dataset", type=str, default="places", choices=["places", "people"]
     )
 
+    parser = RotationModel.add_model_specific_args(parser)
+    parser = pl.Trainer.add_argparse_args(parser)
+
     args = parser.parse_args()
 
-    train(
-        batch_size=args.batch_size,
-        n_workers=args.n_workers,
-        device=args.device,
-        n_devices=args.n_devices,
-        max_epochs=args.max_epochs,
-        dataset=args.dataset,
-    )
+    train(args)
 
 
 if __name__ == "__main__":

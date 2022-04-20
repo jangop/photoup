@@ -1,3 +1,5 @@
+import argparse
+
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional
@@ -5,8 +7,21 @@ import torchmetrics
 
 
 class RotationModel(pl.LightningModule):
-    def __init__(self,):
+    @staticmethod
+    def add_model_specific_args(parent_parser: argparse.ArgumentParser):
+        parser = parent_parser.add_argument_group("Model specific arguments")
+        parser.add_argument(
+            "--transforms",
+            type=str,
+            default="auto",
+            choices=["auto", "none", "soft", "hard"],
+            help="Transformation strategy for data augmentation",
+        )
+        return parent_parser
+
+    def __init__(self, args):
         super().__init__()
+        self.save_hyperparameters()
 
         self.first_normalization = torch.nn.BatchNorm2d(3)
         self.first_convolution = torch.nn.Conv2d(3, 12, kernel_size=5, stride=2)
