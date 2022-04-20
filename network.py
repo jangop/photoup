@@ -89,22 +89,85 @@ class RotationModel(pl.LightningModule):
 
         # Log example images with “top markers”.
         if batch_idx == 0:
-            for i, label in enumerate(predicted_labels):
-                size = 10
+            for i, (predicted_label, true_label) in enumerate(
+                zip(predicted_labels, y_labels)
+            ):
+
+                size = 14
                 start = (128 - size) // 2
                 end = start + size
-                if label == 0:
-                    x[i, :, :size, start:end] = 0
-                    x[i, :, 2 : size - 2, start + 2 : end - 2] = 1
-                elif label == 1:
-                    x[i, :, start:end, :size] = 0
-                    x[i, :, start + 2 : end - 2, 2 : size - 2] = 1
-                elif label == 2:
-                    x[i, :, -size:, start:end] = 0
-                    x[i, :, -size + 2 : -2, start + 2 : end - 2] = 1
-                elif label == 3:
-                    x[i, :, start:end:, -size:] = 0
-                    x[i, :, start + 2 : end - 2 :, -size + 2 : -2] = 1
+                padding = 2
+                margin = 2
+                if true_label == 0:
+                    x[i, :, padding : padding + size, start:end] = 0
+                    x[
+                        i,
+                        :,
+                        padding + margin : padding + size - margin,
+                        start + margin : end - margin,
+                    ] = 1
+                elif true_label == 1:
+                    x[i, :, start:end, padding : padding + size] = 0
+                    x[
+                        i,
+                        :,
+                        start + margin : end - margin,
+                        padding + margin : padding + size - margin,
+                    ] = 1
+                elif true_label == 2:
+                    x[i, :, -size - padding : -padding, start:end] = 0
+                    x[
+                        i,
+                        :,
+                        -size - padding + margin : -margin - padding,
+                        start + margin : end - margin,
+                    ] = 1
+                elif true_label == 3:
+                    x[i, :, start:end:, -size - padding : -padding] = 0
+                    x[
+                        i,
+                        :,
+                        start + margin : end - margin :,
+                        -size - padding + margin : -margin - padding,
+                    ] = 1
+
+                size = 8
+                start = (128 - size) // 2
+                end = start + size
+                padding = 5
+                margin = 2
+                if predicted_label == 0:
+                    x[i, :, padding : padding + size, start:end] = 0
+                    x[
+                        i,
+                        :,
+                        padding + margin : padding + size - margin,
+                        start + margin : end - margin,
+                    ] = 1
+                elif predicted_label == 1:
+                    x[i, :, start:end, padding : padding + size] = 0
+                    x[
+                        i,
+                        :,
+                        start + margin : end - margin,
+                        padding + margin : padding + size - margin,
+                    ] = 1
+                elif predicted_label == 2:
+                    x[i, :, -size - padding : -padding, start:end] = 0
+                    x[
+                        i,
+                        :,
+                        -size - padding + margin : -margin - padding,
+                        start + margin : end - margin,
+                    ] = 1
+                elif predicted_label == 3:
+                    x[i, :, start:end:, -size - padding : -padding] = 0
+                    x[
+                        i,
+                        :,
+                        start + margin : end - margin :,
+                        -size - padding + margin : -margin - padding,
+                    ] = 1
             self.logger.experiment.add_images("batch", x)
 
         # Return loss.
